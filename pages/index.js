@@ -1,65 +1,127 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import {
+  Box,
+  Container,
+  VStack,
+  Heading,
+  CircularProgress,
+} from '@chakra-ui/react';
+import useSWR from 'swr';
+import dynamic from 'next/dynamic';
+const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
+import dayjs from 'dayjs';
+import { RiEmotionSadLine } from 'react-icons/ri';
+
+const fetcher = (...args) => fetch(...args).then(res => res.json());
 
 export default function Home() {
+  const url = `https://api.waqi.info/feed/bangkok/?token=${process.env.AQI_TOKEN}`;
+
+  const { data, error } = useSWR(url, fetcher);
+
+  if (error) return <div>failed to load</div>;
+  if (!data)
+    return (
+      <Container maxW='xl' centerContent mt={6}>
+        <CircularProgress isIndeterminate color='gray.300' />
+      </Container>
+    );
+
+  const dataAQI = {
+    series: [
+      {
+        name: 'High - 2021',
+        data: data.data.forecast.daily.pm25.map(item => item.max),
+      },
+      {
+        name: 'Low - 2021',
+        data: data.data.forecast.daily.pm25.map(item => item.min),
+      },
+    ],
+    options: {
+      chart: {
+        background: '#fff',
+        height: 350,
+        type: 'line',
+        dropShadow: {
+          color: '#000',
+          top: 18,
+          left: 7,
+          blur: 10,
+          opacity: 0.2,
+        },
+        toolbar: {
+          show: false,
+        },
+      },
+      colors: ['#ff3d3d', '#33bbff'],
+      dataLabels: {
+        enabled: true,
+      },
+      stroke: {
+        curve: 'smooth',
+      },
+      grid: {
+        borderColor: '#e7e7e7',
+        row: {
+          colors: ['#f3f3f3', 'transparent'],
+          opacity: 0.5,
+        },
+      },
+      markers: {
+        size: 1,
+      },
+      xaxis: {
+        categories: data.data.forecast.daily.pm25.map(item =>
+          dayjs(item.day).format('dddd')
+        ),
+        title: {
+          text: 'Days',
+        },
+      },
+      yaxis: {
+        title: {
+          text: 'PM2.5',
+        },
+        min: 15,
+        max: 300,
+      },
+      legend: {
+        position: 'top',
+        horizontalAlign: 'right',
+        floating: true,
+        offsetY: -25,
+        offsetX: -5,
+      },
+    },
+  };
+
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
-    </div>
-  )
+    <Container maxW='6xl' centerContent mt={6}>
+      <Box
+        padding='4'
+        bg='gray.100'
+        maxW={[
+          'auto', // 0-30em
+          'auto', // 30em-48em
+          'auto', // 48em-62em
+          '1000px', // 62em+
+        ]}
+        width={[
+          '100%', // 992px upwards
+          '100%', // 768px upwards
+          '85%', // 480px upwards
+          '100%', // base
+        ]}
+        backgroundColor='teal'
+      >
+        <VStack maxW='6xl'>
+          <Heading color='white'>How bad is it? 🤔</Heading>
+          <Heading color='white'>{data?.data?.city.name} </Heading>
+          <Heading color='white'>{data?.data.iaqi.pm25.v}</Heading>{' '}
+          <RiEmotionSadLine size='50px' color='white' />
+        </VStack>
+        <Chart {...dataAQI} type='line' height={550} />
+      </Box>
+    </Container>
+  );
 }
