@@ -1,3 +1,14 @@
+# PM2.5 Bangkok Today
+
+simple web app that fetch data from [AQI](https://aqicn.org/city/bangkok/)
+
+## Tech
+
+- Next.js
+- SWR
+- Chakra-ui
+- APEX Chart
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
